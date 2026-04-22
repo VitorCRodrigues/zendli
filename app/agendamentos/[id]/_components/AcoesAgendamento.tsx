@@ -51,6 +51,24 @@ export default function AcoesAgendamento({
   const [atualizando, setAtualizando] = useState(false)
   const [erro, setErro] = useState('')
 
+  async function handleEnviarConfirmacao() {
+    setAtualizando(true)
+    setErro('')
+    try {
+      const res = await fetch('/api/whatsapp/enviar-confirmacao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agendamentoId }),
+      })
+      if (!res.ok) throw new Error('Erro ao enviar')
+      router.refresh()
+    } catch {
+      setErro('Erro ao enviar mensagem. Verifique se o WhatsApp está conectado.')
+    } finally {
+      setAtualizando(false)
+    }
+  }
+
   async function atualizarStatus(novoStatus: StatusAgendamento) {
     setAtualizando(true)
     setErro('')
@@ -96,7 +114,11 @@ export default function AcoesAgendamento({
       {acoes.map(acao => (
         <button
           key={acao.novoStatus}
-          onClick={() => atualizarStatus(acao.novoStatus)}
+          onClick={() =>
+            acao.novoStatus === 'aguardando_confirmacao'
+              ? handleEnviarConfirmacao()
+              : atualizarStatus(acao.novoStatus)
+          }
           disabled={atualizando}
           className="w-full rounded-xl px-4 py-3 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
           style={
